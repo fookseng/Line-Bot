@@ -14,6 +14,7 @@ import configparser
 from bs4 import BeautifulSoup
 from imgurpython import ImgurClient
 from config import client_id, client_secret, album_id, access_token, refresh_token
+import tempfile, os
 
 app = Flask(__name__)
 
@@ -21,6 +22,8 @@ app = Flask(__name__)
 line_bot_api = LineBotApi('kXstBj4Fw+0w+6kvJB7yY6tyieLT13lgt+A456k3MdC+RaavJav0UWI6STr/CYkOvp36ogy3v5E3eYu9tCmJkPP+LDvWCNv51yse+eaEl+0wFb6nW0LFVoDWevQ0xnRixBjWaUek8VlQPNgCOYqeTQdB04t89/1O/w1cDnyilFU=')
 # Channel Secret
 handler = WebhookHandler('63f7a30334c31485223f6dc93525a826')
+
+static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -53,7 +56,8 @@ def apple_news():
 
 
 # 處理訊息
-@handler.add(MessageEvent, message=TextMessage)
+#@handler.add(MessageEvent, message=TextMessage)
+@handler.add(MessageEvent, message=(ImageMessage, TextMessage))
 def handle_message(event):
     print("event.reply_token:", event.reply_token)
     print("event.message.text:", event.message.text)
@@ -80,13 +84,17 @@ def handle_message(event):
             client.upload_from_path(path, config=config, anon=False)
             os.remove(path)
             print(path)
-            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='上傳成功'))
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text='上傳成功'))
         except:
-            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='上傳失敗'))
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text='上傳失敗'))
         return 0
 
     
-    if event.message.text == "看看大家都傳了什麼圖片":
+    if event.message.text == "大家都吃什麼" or event.message.text == "suggestion":
         client = ImgurClient(client_id, client_secret)
         images = client.get_album_images(album_id)
         index = random.randint(0, len(images) - 1)
